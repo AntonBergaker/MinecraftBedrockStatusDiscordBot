@@ -14,7 +14,7 @@ namespace MinecraftBedrockStatus {
         private readonly UdpClient client;
         
         // We store the task we use to recieve data, because when TimeOut occurs it will actually still be listening.
-        private Task<UdpReceiveResult>? recieveTask;
+        private Task<UdpReceiveResult>? storedResultTask;
         
         /// <summary>
         /// Constructor
@@ -50,24 +50,28 @@ namespace MinecraftBedrockStatus {
                 await client.SendAsync(data, data.Length, new IPEndPoint(address, port));
             }
 
-            string information;
-            Task<UdpReceiveResult> resultTask;
-            if (recieveTask == null || recieveTask.IsCompleted) {
-                resultTask = client.ReceiveAsync();
+            Task<UdpReceiveResult> currentResultTask;
+
+            // If an uncompleted listening task still exists, use it instead of making a new one
+            if (storedResultTask == null || storedResultTask.IsCompleted) {
+                currentResultTask = client.ReceiveAsync();
             }
             else {
-                resultTask = recieveTask;
+                currentResultTask = storedResultTask;
             }
 
-            await Task.WhenAny(resultTask, Task.Delay(timeout));
+            await Task.WhenAny(currentResultTask, Task.Delay(timeout));
 
-            if (resultTask.IsCompleted == false) {
-                recieveTask = resultTask;
+            // If currentResultTask is not completed, the timeout occurred
+            if (currentResultTask.IsCompleted == false) {
+                // Store the listening task, as it isn't closeable we must reuse it for the next attempt
+                storedResultTask = currentResultTask;
                 throw new TimeoutException($"Server did not respond within {timeout} ms.");
             }
             
-            UdpReceiveResult result = resultTask.Result;
-            
+            UdpReceiveResult result = currentResultTask.Result;
+
+            string information;
             {
                 using MemoryStream stream = new MemoryStream(result.Buffer);
                 using BinaryReader reader = new BinaryReader(stream);
