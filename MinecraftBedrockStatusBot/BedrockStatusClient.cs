@@ -12,7 +12,10 @@ namespace MinecraftBedrockStatus {
         private readonly int port;
         private readonly IPAddress address;
         private readonly UdpClient client;
-
+        
+        // We store the task we use to recieve data, because when TimeOut occurs it will actually still be listening.
+        private Task<UdpReceiveResult>? recieveTask;
+        
         /// <summary>
         /// Constructor
         /// </summary>
@@ -48,11 +51,18 @@ namespace MinecraftBedrockStatus {
             }
 
             string information;
-            var resultTask = client.ReceiveAsync();
+            Task<UdpReceiveResult> resultTask;
+            if (recieveTask == null || recieveTask.IsCompleted) {
+                resultTask = client.ReceiveAsync();
+            }
+            else {
+                resultTask = recieveTask;
+            }
 
             await Task.WhenAny(resultTask, Task.Delay(timeout));
 
             if (resultTask.IsCompleted == false) {
+                recieveTask = resultTask;
                 throw new TimeoutException($"Server did not respond within {timeout} ms.");
             }
             

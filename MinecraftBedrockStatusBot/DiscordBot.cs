@@ -33,17 +33,23 @@ namespace MinecraftBedrockStatusBot {
         /// Runs forever polling the server status every 10 seconds and updating the Discord Activity
         /// </summary>
         /// <returns>no</returns>
+        private string lastStatus = "";
         private async Task PollServer() {
             while (true) {
+                string newStatus;
                 try {
                     var result = await bedrockStatusClient.GetStatusAsync();
-                    await client.SetActivityAsync(new Game($"{result.Name} - {result.PlayerCount}/{result.MaxPlayerCount}"));
+                    newStatus = $"{result.Name} - {result.PlayerCount}/{result.MaxPlayerCount}";
                 }
-                catch {
-                    await client.SetActivityAsync(new Game($"Server Offline"));
+                catch (TimeoutException) {
+                    newStatus = "Server Offline";
                 }
 
-                
+                if (lastStatus != newStatus) {
+                    lastStatus = newStatus;
+                    await client.SetActivityAsync(new Game(newStatus));
+                }
+
                 await Task.Delay(10000);
             }
         }
