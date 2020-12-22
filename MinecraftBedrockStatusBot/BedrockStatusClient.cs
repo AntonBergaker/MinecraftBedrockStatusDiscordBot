@@ -28,7 +28,7 @@ namespace MinecraftBedrockStatus {
         }
 
         /// <summary>
-        /// These bytes are used for identification and are added to some packets.
+        /// These bytes are used for identification and are added to some packets. Server will not reply if they're not correct
         /// </summary>
         private static readonly byte[] MagicBytes =
             {0x00, 0xff, 0xff, 0x00, 0xfe, 0xfe, 0xfe, 0xfe, 0xfd, 0xfd, 0xfd, 0xfd, 0x12, 0x34, 0x56, 0x78};
@@ -43,9 +43,9 @@ namespace MinecraftBedrockStatus {
                 byte[] data = new byte[25];
                 using MemoryStream stream = new MemoryStream(data);
                 using BinaryWriter writer = new BinaryWriter(stream);
-                writer.Write((byte) 0x01);
-                writer.Write(0L);
-                writer.Write(MagicBytes);
+                writer.Write((byte) 0x01); // PacketHeader. 0x01 is ID_CONNECTED_PING_OPEN_CONNECTIONS
+                writer.Write(0L); // Current timestamp. Used to calculate ping normally but we don't really care.
+                writer.Write(MagicBytes); // Magic that makes the server reply
                 
                 await client.SendAsync(data, data.Length, new IPEndPoint(address, port));
             }
