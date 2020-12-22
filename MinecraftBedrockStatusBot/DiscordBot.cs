@@ -8,11 +8,15 @@ using MinecraftBedrockStatus;
 namespace MinecraftBedrockStatusBot {
     class DiscordBot {
         private readonly string token;
+        private readonly string onlineStatus;
+        private readonly string offlineStatus;
         private readonly DiscordSocketClient client;
         private readonly BedrockStatusClient bedrockStatusClient;
 
-        public DiscordBot(string token, IPAddress ipAddress, int port) {
+        public DiscordBot(string token, IPAddress ipAddress, int port, string onlineStatus, string offlineStatus) {
             this.token = token;
+            this.onlineStatus = onlineStatus;
+            this.offlineStatus = offlineStatus;
             client = new DiscordSocketClient();
             client.Ready += ReadyAsync;
             bedrockStatusClient = new BedrockStatusClient(ipAddress, port);
@@ -39,10 +43,15 @@ namespace MinecraftBedrockStatusBot {
                 string newStatus;
                 try {
                     var result = await bedrockStatusClient.GetStatusAsync();
-                    newStatus = $"{result.Name} - {result.PlayerCount}/{result.MaxPlayerCount}";
+                    newStatus = onlineStatus
+                        .Replace("$ServerName$", result.Name)
+                        .Replace("$Version$", result.Version)
+                        .Replace("$PlayerCount$", result.PlayerCount.ToString())
+                        .Replace("$MaxPlayerCount$", result.MaxPlayerCount.ToString())
+                        .Replace("$GameMode$", result.GameType ?? "Undefined");
                 }
                 catch (TimeoutException) {
-                    newStatus = "Server Offline";
+                    newStatus = offlineStatus;
                 }
 
                 if (lastStatus != newStatus) {

@@ -1,5 +1,7 @@
 ﻿{
   "token": "",
   "server_address": "",
-  "server_port": 19132
+  "server_port": 19132,
+  "online_message": "$ServerName$ - $PlayerCount$/$MaxPlayerCount$", 
+  "offline_message": "Server Offline"
 }
