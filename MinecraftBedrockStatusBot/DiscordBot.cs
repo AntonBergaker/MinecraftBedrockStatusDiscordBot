@@ -8,6 +8,7 @@ using MinecraftBedrockStatus;
 namespace MinecraftBedrockStatusBot {
     class DiscordBot {
         private readonly string token;
+        private readonly IPAddress ipAddress;
         private readonly string onlineStatus;
         private readonly string offlineStatus;
         private readonly DiscordSocketClient client;
@@ -15,6 +16,7 @@ namespace MinecraftBedrockStatusBot {
 
         public DiscordBot(string token, IPAddress ipAddress, int port, string onlineStatus, string offlineStatus) {
             this.token = token;
+            this.ipAddress = ipAddress;
             this.onlineStatus = onlineStatus;
             this.offlineStatus = offlineStatus;
             client = new DiscordSocketClient();
@@ -31,6 +33,7 @@ namespace MinecraftBedrockStatusBot {
 
             await loginTask;
             await client.StartAsync();
+            var _ = PollServer();
         }
 
         /// <summary>
@@ -45,10 +48,13 @@ namespace MinecraftBedrockStatusBot {
                     var result = await bedrockStatusClient.GetStatusAsync();
                     newStatus = onlineStatus
                         .Replace("$ServerName$", result.Name)
+                        .Replace("$WorldName$", result.WorldName)
                         .Replace("$Version$", result.Version)
                         .Replace("$PlayerCount$", result.PlayerCount.ToString())
                         .Replace("$MaxPlayerCount$", result.MaxPlayerCount.ToString())
-                        .Replace("$GameMode$", result.GameType ?? "Undefined");
+                        .Replace("$GameMode$", result.GameType ?? "Undefined")
+                        .Replace("$IP$", ipAddress.ToString())
+                    ;
                 }
                 catch (TimeoutException) {
                     newStatus = offlineStatus;
@@ -66,7 +72,6 @@ namespace MinecraftBedrockStatusBot {
 
         private Task ReadyAsync() {
             Console.WriteLine($"{client.CurrentUser} is connected!");
-            var _ = PollServer();
             return Task.CompletedTask;
         }
     }

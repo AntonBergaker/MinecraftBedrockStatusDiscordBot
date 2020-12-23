@@ -14,9 +14,11 @@ The bot is configurable using settings.json. The following fields are available.
 **`online_message`**: Status to display on the bot when the server is online. Certain keywords will be replaced with server information.  
 *Keywords:*
 * `$ServerName$`: Server Name  
+* `$WorldName$`: World Name  
 * `$Version$`: Server Minecraft Version  
 * `$PlayerCount$`: Current amount of online players  
 * `$MaxPlayerCount$`: Maximum amount of online players  
 * `$GameMode$`: Default gamemode on the server. Either SURVIVAL or CREATIVE.  
+* `$IP$`: The IP of the server. Not the same as the address as this won't be an URL. I'm honestly not sure why I added this.  
 
 **`offline_message`**: Status to display on the bot when the server is offline. Keywords are not available here.
